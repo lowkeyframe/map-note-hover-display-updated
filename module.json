@@ -12,6 +12,9 @@
       "name": "FriendlyLambda"
     }
   ],
+  "relationships": {
+    "systems": []
+  },
   "esmodules": [
     "./map-note-hover-display-updated.js"
   ],
