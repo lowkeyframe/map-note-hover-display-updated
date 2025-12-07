@@ -11,7 +11,10 @@ Just install the package and then opt in for yourself in the settings. This pack
 # Screenshot
 
 ![Screenshot](https://gitlab.com/friendlylambda/map-note-hover-display/-/raw/b8cae1bf64019c9fd6068393dc5d42e42fb2d274/screenshot.png)
-
+screenshot.png
 # Credit
 
-I developed this module based on the functionality in [Pin Cushion](https://github.com/death-save/pin-cushion)—thank you to [Death Save Development](https://github.com/death-save) for their great work!
+Module was first made by FriendlyLambda (thank you for your great work), I just used Claude AI to update to v13  (I have not credit on this project at all)
+
+Original credit note :
+[FriendlyLambda] developed this module based on the functionality in [Pin Cushion](https://github.com/death-save/pin-cushion)—thank you to [Death Save Development](https://github.com/death-save) for their great work!
