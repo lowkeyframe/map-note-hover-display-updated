@@ -1,5 +1,5 @@
-const MODULE_NAME = "map-note-hover-display-updated"
-const ELEMENT_ID = "map-note-hover-display-updated"
+const MODULE_NAME = "map-note-hover-display"
+const ELEMENT_ID = "map-note-hover-display"
 
 class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
   constructor(options = {}) {
@@ -25,7 +25,7 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
   static PARTS = {
     display: {
       id: "content",
-      template: "modules/map-note-hover-display-updated/template.html",
+      template: "modules/map-note-hover-display/template.html",
     },
   }
 
@@ -228,5 +228,12 @@ Hooks.on("hoverNote", (note, hovered) => {
     } else {
       canvas.hud.mapNoteHoverDisplay?.clear()
     }
+  }
+})
+
+Hooks.on("deleteNote", (note) => {
+  // Clear the display if the deleted note is currently being displayed
+  if (canvas.hud.mapNoteHoverDisplay?.note === note) {
+    canvas.hud.mapNoteHoverDisplay?.clear()
   }
 })

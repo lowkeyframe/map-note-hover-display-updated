@@ -2,7 +2,7 @@
   "id": "map-note-hover-display-updated",
   "title": "Map Note Hover Display Updated",
   "description": "Displays the contents of the journal entry for a map note when the map note is hovered",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
