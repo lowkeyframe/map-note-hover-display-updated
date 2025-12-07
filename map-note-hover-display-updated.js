@@ -1,5 +1,5 @@
-const MODULE_NAME = "map-note-hover-display"
-const ELEMENT_ID = "map-note-hover-display"
+const MODULE_NAME = "map-note-hover-display-updated"
+const ELEMENT_ID = "map-note-hover-display-updated"
 
 class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
   constructor(options = {}) {
@@ -25,7 +25,7 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
   static PARTS = {
     display: {
       id: "content",
-      template: "modules/map-note-hover-display/template.html",
+      template: "modules/map-note-hover-display-updated/template.html",
     },
   }
 
@@ -97,6 +97,21 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
       
       this.clearTimeout = null
     }, 50) // 50ms delay for snappier response
+  }
+
+  clearImmediate() {
+    // Clear any pending timeout
+    if (this.clearTimeout) {
+      clearTimeout(this.clearTimeout)
+      this.clearTimeout = null
+    }
+    
+    this.note = null
+    
+    // Hide the element immediately
+    if (this.element) {
+      this.element.style.display = "none"
+    }
   }
 
   async _renderHTML(context, options) {
@@ -231,9 +246,13 @@ Hooks.on("hoverNote", (note, hovered) => {
   }
 })
 
-Hooks.on("deleteNote", (note) => {
-  // Clear the display if the deleted note is currently being displayed
-  if (canvas.hud.mapNoteHoverDisplay?.note === note) {
-    canvas.hud.mapNoteHoverDisplay?.clear()
-  }
+Hooks.on("deleteNote", (noteDocument, options, userId) => {
+  console.log("Note deleted:", noteDocument)
+  // Always clear the display when any note is deleted
+  canvas.hud.mapNoteHoverDisplay?.clearImmediate()
+})
+
+Hooks.on("canvasReady", () => {
+  // Clear display when canvas changes (switching scenes, etc)
+  canvas.hud.mapNoteHoverDisplay?.clearImmediate()
 })
