@@ -2,7 +2,13 @@
 
 A single-purpose module that provides a HUD view of a map note's journal entry contents when hovered.
 
+User enables the module via the eye icon in the Notes controls. 
+
 It provides some basic customization options in the settings, such as a light theme and a dark theme.
+
+Original tooltip and label are hidden when note is hovered. 
+
+Content is rendered and positioned intelligently based on screen location. 
 
 # Installation
 
@@ -10,7 +16,10 @@ To install, simply search for the module in the install module section of Foundr
 
 # Usage
 
-Just install the package and then opt in for yourself in the settings. This package requires each user to opt in if they want to see the hover displays so that it's not annoying for those who don't need it.
+Just install the package and then opt in for yourself in the settings. This package requires each user to opt in if they want to see the hover displays so that it's not annoying for those who don't need it.  
+
+There is now a button in the UI to turn the map hover on/off. 
+![Screenshot](https://github.com/lowkeyframe/map-note-hover-display-updated/blob/main/screenshotUI.png)
 
 # Screenshot
 
