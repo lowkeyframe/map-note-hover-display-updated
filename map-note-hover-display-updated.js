@@ -6,6 +6,7 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
     super(options)
     this.note = null
     this.clearTimeout = null
+    this.originalTooltip = null
   }
 
   static DEFAULT_OPTIONS = {
@@ -72,6 +73,10 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
     }
     
     this.note = note
+    
+    // Hide the original note tooltip and text label
+    this._hideOriginalTooltip(note)
+    
     await this.render(true, { force: true })
     
     // Make sure it's visible
@@ -85,6 +90,9 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
     if (this.clearTimeout) {
       clearTimeout(this.clearTimeout)
     }
+    
+    // Restore original tooltip and text label
+    this._restoreOriginalTooltip()
     
     // Add a small delay before actually clearing
     this.clearTimeout = setTimeout(() => {
@@ -106,12 +114,64 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
       this.clearTimeout = null
     }
     
+    // Restore original tooltip and text label
+    this._restoreOriginalTooltip()
+    
     this.note = null
     
     // Hide the element immediately
     if (this.element) {
       this.element.style.display = "none"
     }
+  }
+
+  _hideOriginalTooltip(note) {
+    this.originalTooltip = {}
+    
+    // Hide the tooltip
+    if (note?.tooltip) {
+      this.originalTooltip.tooltip = {
+        element: note.tooltip,
+        display: note.tooltip.style.display
+      }
+      note.tooltip.style.display = "none"
+    }
+    
+    // Hide the text label - search through children for PreciseText object
+    if (note?.children) {
+      for (const child of note.children) {
+        if (child.constructor.name === 'PreciseText' || child instanceof PIXI.Text) {
+          this.originalTooltip.textChild = {
+            element: child,
+            visible: child.visible,
+            renderable: child.renderable,
+            alpha: child.alpha
+          }
+          child.visible = false
+          child.renderable = false
+          child.alpha = 0
+          break
+        }
+      }
+    }
+  }
+
+  _restoreOriginalTooltip() {
+    if (!this.originalTooltip) return
+    
+    // Restore tooltip
+    if (this.originalTooltip.tooltip?.element) {
+      this.originalTooltip.tooltip.element.style.display = this.originalTooltip.tooltip.display
+    }
+    
+    // Restore text label
+    if (this.originalTooltip.textChild?.element) {
+      this.originalTooltip.textChild.element.visible = this.originalTooltip.textChild.visible
+      this.originalTooltip.textChild.element.renderable = this.originalTooltip.textChild.renderable
+      this.originalTooltip.textChild.element.alpha = this.originalTooltip.textChild.alpha
+    }
+    
+    this.originalTooltip = null
   }
 
   async _renderHTML(context, options) {
@@ -132,7 +192,7 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
   }
 
   _replaceHTML(result, content, options) {
-    if (result && result.display) {
+    if (result?.display) {
       content.innerHTML = result.display
     }
   }
@@ -155,11 +215,42 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
     const screenY = globalPos.y
     
     const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
     const mapNoteIconWidth = this.note.controlIcon?.width || 40
     const mapNoteIconHeight = this.note.controlIcon?.height || 40
     
+    // Determine if we're in the bottom half of the screen
+    const isBottomHalf = screenY > viewportHeight / 2
+    
     // Determine if we should show on left or right of the note
     const orientation = screenX < viewportWidth / 2 ? "right" : "left"
+
+    // Calculate position
+    let top, left, transform
+    
+    if (isBottomHalf) {
+      // Position above the note when in bottom half
+      top = `${screenY - mapNoteIconHeight / 2}px`
+      
+      if (orientation === "right") {
+        left = `${screenX + mapNoteIconWidth}px`
+        transform = "translateY(-100%)"
+      } else {
+        left = `${screenX - mapNoteIconWidth}px`
+        transform = "translate(-100%, -100%)"
+      }
+    } else {
+      // Original behavior for top half
+      top = `${screenY - mapNoteIconHeight / 2}px`
+      
+      if (orientation === "right") {
+        left = `${screenX + mapNoteIconWidth}px`
+        transform = "translateY(0)"
+      } else {
+        left = `${screenX - mapNoteIconWidth}px`
+        transform = "translateX(-100%)"
+      }
+    }
 
     // Apply styles
     Object.assign(this.element.style, {
@@ -173,12 +264,9 @@ class MapNoteHoverDisplay extends foundry.applications.api.ApplicationV2 {
       width: "auto",
       maxWidth: `${maxWidth}px`,
       height: "auto",
-      top: `${screenY - mapNoteIconHeight / 2}px`,
-      left:
-        orientation === "right"
-          ? `${screenX + mapNoteIconWidth}px`
-          : `${screenX - mapNoteIconWidth}px`,
-      transform: orientation === "right" ? "" : "translateX(-100%)",
+      top: top,
+      left: left,
+      transform: transform,
       overflowWrap: "break-word",
       textAlign: "left",
       fontSize: fontSize,
@@ -235,14 +323,48 @@ Hooks.once("ready", () => {
   canvas.hud.mapNoteHoverDisplay = new MapNoteHoverDisplay()
 })
 
+// Add toggle button to the scene controls (v13 syntax)
+Hooks.on("getSceneControlButtons", (controls) => {
+  if (!controls.notes) return
+
+  // In v13, tools is an object, not an array
+  controls.notes.tools["map-note-hover-toggle"] = {
+    name: "map-note-hover-toggle",
+    title: "Map Note Hover Display",
+    icon: "fa-solid fa-eye",
+    toggle: true,
+    active: game.settings.get(MODULE_NAME, "enabled"),
+    onChange: async (toggled) => {
+      // Toggle the current setting value
+      const currentValue = game.settings.get(MODULE_NAME, "enabled")
+      const newValue = !currentValue
+      await game.settings.set(MODULE_NAME, "enabled", newValue)
+      
+      ui.notifications.info(
+        `Map Note Hover Display: ${newValue ? "Enabled" : "Disabled"}`
+      )
+      
+      // If disabled, clear any active display
+      if (!newValue) {
+        canvas.hud.mapNoteHoverDisplay?.clearImmediate()
+      }
+    }
+  }
+})
+
 Hooks.on("hoverNote", (note, hovered) => {
-  if (game.settings.get(MODULE_NAME, "enabled")) {
+  const enabled = game.settings.get(MODULE_NAME, "enabled")
+  
+  if (enabled) {
     // If the note is hovered by the mouse cursor (not via alt/option)
     if (hovered && note.mouseInteractionManager?.state === 1) {
       canvas.hud.mapNoteHoverDisplay?.bind(note)
     } else {
       canvas.hud.mapNoteHoverDisplay?.clear()
     }
+  } else {
+    // If disabled, make sure the display is cleared
+    canvas.hud.mapNoteHoverDisplay?.clearImmediate()
   }
 })
 
