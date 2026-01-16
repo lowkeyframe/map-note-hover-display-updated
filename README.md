@@ -18,7 +18,8 @@ To install, simply search for the module in the install module section of Foundr
 
 Just install the package and then opt in for yourself in the settings. This package requires each user to opt in if they want to see the hover displays so that it's not annoying for those who don't need it.  
 
-There is now a button in the UI to turn the map hover on/off.     
+There is now a button in the UI to turn the map hover on/off.  
+  
 ![Screenshot](https://github.com/lowkeyframe/map-note-hover-display-updated/blob/main/screenshotUI.png)
 
 # Screenshot
